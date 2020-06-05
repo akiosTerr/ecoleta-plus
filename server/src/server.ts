@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import users from './routes/users';
 import items from './routes/items';
@@ -7,6 +8,7 @@ import points from './routes/points';
 const app = express();
 const port = 3333;
 
+app.use(cors());
 app.use(express.json());
 app.use('/users', users);
 app.use('/items', items);

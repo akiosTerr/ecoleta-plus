@@ -1,6 +1,6 @@
 import path from 'path';
 
-const knexconfig = {
+module.exports = {
 	client: 'sqlite3',
 	connection: {
 		filename: path.resolve(__dirname, 'src', 'database', 'database.sqlite'),
@@ -13,5 +13,3 @@ const knexconfig = {
 	},
 	useNullAsDefault: true,
 };
-
-export default knexconfig;

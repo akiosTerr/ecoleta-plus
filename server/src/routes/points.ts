@@ -3,6 +3,44 @@ import knex from '../database/connection';
 
 const router = Router();
 
+router.get('/', async (req, res) => {
+	// const points = await knex('points').select('*');
+	const { city, uf, items } = req.query;
+
+	const parsedItems = String(items)
+		.split(',')
+		.map((item) => Number(item.trim()));
+
+	console.log(parsedItems);
+
+	const points = await knex('points')
+		.join('point_items', 'points.id', '=', 'point_items.point_id')
+		.whereIn('point_items.item_id', parsedItems)
+		.where('city', String(city))
+		.where('uf', String(uf))
+		.distinct()
+		.select('points.*');
+
+	return res.json(points);
+});
+
+router.get('/:id', async (req, res) => {
+	const { id } = req.params;
+
+	const point = await knex('points').where('id', id).first();
+
+	if (!point) {
+		return res.status(400).json({ message: 'point not found' });
+	}
+
+	const items = await knex('items')
+		.join('point_items', 'items.id', '=', 'point_items.item_id')
+		.where('point_items.point_id', id)
+		.select('items.title');
+
+	return res.json({ point, items });
+});
+
 router.post('/', async (req, res) => {
 	const {
 		name,
@@ -15,31 +53,36 @@ router.post('/', async (req, res) => {
 		items,
 	} = req.body;
 
-	const trx = await knex.transaction();
+	knex.transaction(async (trx) => {
+		try {
+			const point = {
+				image: 'image-fake',
+				name,
+				email,
+				whatsapp,
+				latitude,
+				longitude,
+				city,
+				uf,
+			};
+			const ids = await trx('points').insert(point);
 
-	const insertedIds = await trx('points').insert({
-		image: 'image-fake',
-		name,
-		email,
-		whatsapp,
-		latitude,
-		longitude,
-		city,
-		uf,
+			const point_id = ids[0];
+
+			const pointItems = items.map((item_id: number) => {
+				return {
+					item_id,
+					point_id,
+				};
+			});
+
+			await trx('point_items').insert(pointItems);
+			await trx.commit();
+			return res.json({ id: point_id, ...point });
+		} catch (err) {
+			return res.json({ failure: err });
+		}
 	});
-
-	const point_id = insertedIds[0];
-
-	const pointItems = items.map((item_id: number) => {
-		return {
-			item_id,
-			point_id,
-		};
-	});
-
-	await trx('point_items').insert(pointItems);
-
-	return res.json({ insert: 'success' });
 });
 
 export default router;
