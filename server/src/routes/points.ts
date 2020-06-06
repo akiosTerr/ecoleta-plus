@@ -4,22 +4,24 @@ import knex from '../database/connection';
 const router = Router();
 
 router.get('/', async (req, res) => {
-	// const points = await knex('points').select('*');
-	const { city, uf, items } = req.query;
+	const points = await knex('points').select('*');
+	console.log(points);
 
-	const parsedItems = String(items)
-		.split(',')
-		.map((item) => Number(item.trim()));
+	// const { city, uf, items } = req.query;
 
-	console.log(parsedItems);
+	// const parsedItems = String(items)
+	// 	.split(',')
+	// 	.map((item) => Number(item.trim()));
 
-	const points = await knex('points')
-		.join('point_items', 'points.id', '=', 'point_items.point_id')
-		.whereIn('point_items.item_id', parsedItems)
-		.where('city', String(city))
-		.where('uf', String(uf))
-		.distinct()
-		.select('points.*');
+	// console.log(parsedItems);
+
+	// const points = await knex('points')
+	// 	.join('point_items', 'points.id', '=', 'point_items.point_id')
+	// 	.whereIn('point_items.item_id', parsedItems)
+	// 	.where('city', String(city))
+	// 	.where('uf', String(uf))
+	// 	.distinct()
+	// 	.select('points.*');
 
 	return res.json(points);
 });
